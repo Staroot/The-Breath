@@ -1,71 +1,109 @@
 const mainScreen = document.getElementById('main-screen');
 const breathScreen = document.getElementById('breath-screen');
-const btnStress = document.getElementById('btn-stress');
-const btnBack = document.getElementById('btn-back');
+const trackContainer = document.getElementById('track-container');
 const dot = document.getElementById('breathing-dot');
 const textEl = document.getElementById('instruction-text');
+const btnBack = document.getElementById('btn-back');
 
+// 호흡 패턴 데이터 정의 (경로는 모두 하단 중앙에서 시작하도록 통일)
+const breathData = {
+    anxiety: { // 5-5 호흡 (원형)
+        phases: ['들이쉬기', '내쉬기'],
+        times: [5000, 5000],
+        path: "path('M 120 240 A 120 120 0 0 1 120 0 A 120 120 0 0 1 120 240 Z')",
+        animation: 'moveLinear 10s linear infinite',
+        shapeClass: 'shape-circle'
+    },
+    stress: { // 4-4-4-4 박스 호흡 (사각형)
+        phases: ['들이쉬기', '참기', '내쉬기', '참기'],
+        times: [4000, 4000, 4000, 4000],
+        path: "path('M 0 240 L 0 0 L 240 0 L 240 240 Z')",
+        animation: 'moveLinear 16s linear infinite',
+        shapeClass: 'shape-box'
+    },
+    insomnia: { // 3-7-8 호흡 (역삼각형)
+        phases: ['들이쉬기', '참기', '내쉬기'],
+        times: [3000, 7000, 8000],
+        path: "path('M 120 240 L 0 0 L 240 0 Z')",
+        animation: 'moveTriangleOffset 18s linear infinite',
+        shapeClass: 'shape-triangle'
+    }
+};
+
+let phaseTimer, fadeTimer;
+let isBreathing = false;
+let currentMode = null;
 let step = 0;
-const phases = ['들이쉬기', '참기', '내쉬기', '참기'];
 
-// 화면 전환 및 호흡 시작
-btnStress.addEventListener('click', () => {
-    mainScreen.style.opacity = '0';
+// 버튼 이벤트 리스너 등록
+document.querySelectorAll('.breath-button').forEach(button => {
+    button.addEventListener('click', () => {
+        const mode = button.getAttribute('data-mode');
+        startMode(breathData[mode]);
+    });
+});
+
+function startMode(modeData) {
+    currentMode = modeData;
     
+    // 궤적 모양 및 점 애니메이션 설정
+    trackContainer.className = `box-track ${currentMode.shapeClass}`;
+    dot.style.offsetPath = currentMode.path;
+    
+    mainScreen.style.opacity = '0';
     setTimeout(() => {
         mainScreen.style.display = 'none';
         breathScreen.style.display = 'flex';
-        
         setTimeout(() => {
             breathScreen.style.opacity = '1';
-            startBreathingCycle();
+            
+            // 초기화 후 실행
+            isBreathing = true;
+            step = 0;
+            dot.style.animation = currentMode.animation;
+            dot.style.animationPlayState = 'running';
+            runPhase();
         }, 50);
     }, 500);
-});
-
-// 호흡 사이클 시작 (애니메이션 재생)
-function startBreathingCycle() {
-    step = 0;
-    textEl.innerText = phases[step];
-    
-    // 점과 텍스트의 CSS 애니메이션을 동시에 시작
-    dot.style.animationPlayState = 'running';
-    textEl.style.animationPlayState = 'running';
 }
 
-// 핵심 로직: 텍스트 애니메이션(4초)이 한 사이클 끝날 때마다 발생하는 이벤트
-textEl.addEventListener('animationiteration', () => {
-    // 투명도가 0%인 상태(100% -> 0%로 넘어가는 순간)에서 글자 교체
-    step = (step + 1) % phases.length;
-    textEl.innerText = phases[step];
-});
+// 정확한 타이밍으로 텍스트를 교체하는 재귀 함수
+function runPhase() {
+    if (!isBreathing) return;
+
+    textEl.innerText = currentMode.phases[step];
+    textEl.style.opacity = '1'; // 페이드 인
+
+    const currentDuration = currentMode.times[step];
+
+    // 목표 시간 0.5초 전에 페이드 아웃 시작
+    fadeTimer = setTimeout(() => {
+        if (isBreathing) textEl.style.opacity = '0';
+    }, currentDuration - 500);
+
+    // 목표 시간에 정확히 다음 단계로 이행
+    phaseTimer = setTimeout(() => {
+        if (isBreathing) {
+            step = (step + 1) % currentMode.phases.length;
+            runPhase();
+        }
+    }, currentDuration);
+}
 
 // 메인 화면으로 복귀
 btnBack.addEventListener('click', () => {
-    // 점과 텍스트의 애니메이션 정지 및 초기화
-    dot.style.animationPlayState = 'paused';
-    textEl.style.animationPlayState = 'paused';
+    isBreathing = false;
+    clearTimeout(phaseTimer);
+    clearTimeout(fadeTimer);
     
+    dot.style.animationPlayState = 'paused';
     dot.style.animation = 'none'; 
-    textEl.style.animation = 'none'; 
-    
-    // 리플로우 강제 발생시켜 애니메이션 초기화 적용
-    void dot.offsetWidth;
-    void textEl.offsetWidth; 
-    
-    // 애니메이션 속성 원상복구
-    dot.style.animation = 'moveAroundBox 16s linear infinite';
-    dot.style.animationPlayState = 'paused';
-    textEl.style.animation = 'textPulse 4s linear infinite';
-    textEl.style.animationPlayState = 'paused';
+    textEl.style.opacity = '0';
 
     breathScreen.style.opacity = '0';
-    
     setTimeout(() => {
         breathScreen.style.display = 'none';
         mainScreen.style.display = 'flex';
-        setTimeout(() => {
-            mainScreen.style.opacity = '1';
-        }, 50);
+        setTimeout(() => mainScreen.style.opacity = '1', 50);
     }, 500);
 });
