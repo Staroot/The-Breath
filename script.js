@@ -5,8 +5,7 @@ const btnBack = document.getElementById('btn-back');
 const dot = document.getElementById('breathing-dot');
 const textEl = document.getElementById('instruction-text');
 
-let cycleTimeout, fadeTimeout;
-let isBreathing = false;
+let step = 0;
 const phases = ['들이쉬기', '참기', '내쉬기', '참기'];
 
 // 화면 전환 및 호흡 시작
@@ -24,52 +23,41 @@ btnStress.addEventListener('click', () => {
     }, 500);
 });
 
-// 타이머 및 텍스트 교체 로직
+// 호흡 사이클 시작 (애니메이션 재생)
 function startBreathingCycle() {
-    let step = 0;
-    isBreathing = true;
-    
-    // 초기 텍스트 설정 및 애니메이션 시작
+    step = 0;
     textEl.innerText = phases[step];
-    textEl.classList.remove('fade-out');
+    
+    // 점과 텍스트의 CSS 애니메이션을 동시에 시작
     dot.style.animationPlayState = 'running';
-
-    function scheduleNextPhase() {
-        if (!isBreathing) return;
-
-        // 점이 변을 이동하는 4초 중 3.5초 대기 후 페이드 아웃 시작
-        cycleTimeout = setTimeout(() => {
-            textEl.classList.add('fade-out');
-            
-            // 0.5초 뒤 (정확히 모서리에 닿는 시점) 텍스트 교체 및 페이드 인
-            fadeTimeout = setTimeout(() => {
-                step = (step + 1) % phases.length;
-                textEl.innerText = phases[step];
-                textEl.classList.remove('fade-out');
-                
-                // 다음 사이클 예약
-                scheduleNextPhase();
-            }, 500);
-        }, 3500); 
-    }
-
-    scheduleNextPhase();
+    textEl.style.animationPlayState = 'running';
 }
+
+// 핵심 로직: 텍스트 애니메이션(4초)이 한 사이클 끝날 때마다 발생하는 이벤트
+textEl.addEventListener('animationiteration', () => {
+    // 투명도가 0%인 상태(100% -> 0%로 넘어가는 순간)에서 글자 교체
+    step = (step + 1) % phases.length;
+    textEl.innerText = phases[step];
+});
 
 // 메인 화면으로 복귀
 btnBack.addEventListener('click', () => {
-    // 타이머 및 상태 초기화
-    isBreathing = false;
-    clearTimeout(cycleTimeout);
-    clearTimeout(fadeTimeout);
-    textEl.classList.remove('fade-out');
-    
-    // 점 애니메이션 초기화
+    // 점과 텍스트의 애니메이션 정지 및 초기화
     dot.style.animationPlayState = 'paused';
+    textEl.style.animationPlayState = 'paused';
+    
     dot.style.animation = 'none'; 
-    void dot.offsetWidth; // 리플로우 강제 발생
+    textEl.style.animation = 'none'; 
+    
+    // 리플로우 강제 발생시켜 애니메이션 초기화 적용
+    void dot.offsetWidth;
+    void textEl.offsetWidth; 
+    
+    // 애니메이션 속성 원상복구
     dot.style.animation = 'moveAroundBox 16s linear infinite';
     dot.style.animationPlayState = 'paused';
+    textEl.style.animation = 'textPulse 4s linear infinite';
+    textEl.style.animationPlayState = 'paused';
 
     breathScreen.style.opacity = '0';
     
