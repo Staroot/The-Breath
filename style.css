@@ -38,18 +38,36 @@ h1 {
     background-color: white;
     border: none;
     border-radius: 24px;
-    padding: 30px 20px;
+    padding: 20px;
     width: 140px;
+    height: 140px; /* 고정 높이 추가 */
+    box-sizing: border-box; /* 패딩을 크기에 포함 */
     box-shadow: 0 10px 20px rgba(0,0,0,0.05);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center; /* 내부 요소 수직 중앙 정렬 */
     transition: transform 0.2s ease;
 }
 
-.breath-button:hover { transform: translateY(-5px); }
-.breath-button span:last-child { font-size: 18px; font-weight: bold; color: #555; }
+.breath-button:hover { 
+    transform: translateY(-5px); 
+}
+
+/* SVG 아이콘 강제 비율 유지 및 디자인 속성 분리 */
+.breath-button svg {
+    flex-shrink: 0; /* 찌그러짐 방지 핵심 속성 */
+    width: 50px;
+    height: 50px;
+    margin-bottom: 12px;
+}
+
+.breath-button span:last-child { 
+    font-size: 18px; 
+    font-weight: bold; 
+    color: #555; 
+}
 
 #breath-screen {
     display: none;
