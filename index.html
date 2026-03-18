@@ -855,8 +855,8 @@ function finishBreathing(){
   running=false; paused=false;
   if(rafId){cancelAnimationFrame(rafId);rafId=null;}
   rippleWrap.style.opacity='0'; setRing(1);
-  elCount.textContent = '0';
-  setTimeout(() => { elCount.textContent = '✓'; }, 400);
+  #elCount.textContent = '0';
+  #setTimeout(() => { elCount.textContent = '✓'; }, 400);
   setPhrase('모두 마쳤습니다. 수고하셨어요',false);
   elBody.style.transition=`transform 1.8s ease-out`;
   elBody.style.transform =`scale(${SCALE_REST})`;
