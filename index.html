@@ -835,8 +835,10 @@ function tickLoop(ts){
   const t=Math.min((ts-phaseStartTs)/(phase.dur*1000),1);
 
   /* 카운트다운 */
-  const rem=t>=1?'·':Math.max(1,Math.ceil(phase.dur*(1-t)));
-  if(elCount.textContent!==String(rem)) elCount.textContent=rem;
+  if (t < 1) {
+    const rem = Math.max(1, Math.ceil(phase.dur * (1 - t)));
+    if (elCount.textContent !== String(rem)) elCount.textContent = rem;
+  }
 
   /* 진행 링 */
   setRing((cycle*method.phases.length+phaseIdx+t)/(userCycles*method.phases.length));
