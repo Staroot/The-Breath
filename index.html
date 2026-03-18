@@ -1,47 +1,892 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relaxation Breathing</title>
-    <meta name="description" content="Helping Relaxation Breathing for Stress, Anxiety and Panic">
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<title>The Breath</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;400&family=Noto+Sans+KR:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:        #080c14;
+  --text:      #9bb4d4;
+  --text-soft: #4e6480;
+  --text-faint:#26344a;
+  --accent:    #6b9fd4;
+  --accent-hi: #8ab8f0;
+  --surface:   rgba(100,160,230,.05);
+  --border:    rgba(100,160,230,.1);
+  --font-en:   'Raleway', sans-serif;
+  --font-kr:   'Noto Sans KR', sans-serif;
+}
+
+html, body {
+  width:100%; height:100%; overflow:hidden;
+  background:var(--bg); color:var(--text);
+}
+body {
+  font-family:var(--font-kr); font-weight:300;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.bg {
+  position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 100% 60% at 25% 15%, rgba(25,60,130,.28) 0%, transparent 55%),
+    radial-gradient(ellipse 80%  70% at 75% 85%, rgba(15,45,100,.22) 0%, transparent 55%),
+    radial-gradient(ellipse 60%  50% at 50% 50%, rgba(10,25,60,.3)   0%, transparent 70%),
+    var(--bg);
+}
+.grain {
+  position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.022;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px;
+}
+
+.screen {
+  position:fixed; inset:0; z-index:3;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:40px 24px;
+  transition:opacity .75s cubic-bezier(.4,0,.2,1), transform .75s cubic-bezier(.4,0,.2,1);
+}
+.screen.hidden  { opacity:0; pointer-events:none; transform:translateY(10px); }
+.screen.visible { opacity:1; pointer-events:auto;  transform:translateY(0); }
+
+/* Brand — left/right:0 + justify-content 방식, transform 충돌 없음 */
+.brand {
+  position:fixed; top:28px; left:0; right:0;
+  z-index:10; display:flex; align-items:center; justify-content:center; gap:10px;
+  pointer-events:none;
+  opacity:0; animation:fadeUp 1s ease .2s forwards;
+}
+.brand-mark {
+  width:24px; height:24px; border-radius:50%;
+  border:1px solid rgba(107,159,212,.3);
+  display:flex; align-items:center; justify-content:center;
+}
+.brand-mark-inner {
+  width:6px; height:6px; border-radius:50%;
+  background:rgba(107,159,212,.5);
+  animation:brandPulse 3s ease-in-out infinite;
+}
+@keyframes brandPulse {
+  0%,100% { transform:scale(1); opacity:.5; }
+  50%      { transform:scale(1.4); opacity:.9; }
+}
+.brand-name {
+  font-family:var(--font-en); font-weight:300; font-size:1rem;
+  letter-spacing:.42em; text-transform:uppercase;
+  color:rgba(155,180,212,.35);
+}
+
+.sound-btn {
+  position:fixed; top:24px; right:20px; z-index:10;
+  background:none; border:none; cursor:pointer; padding:6px;
+  color:var(--text-faint); transition:color .25s;
+  opacity:0; animation:fadeUp 1s ease .2s forwards;
+  display:flex; align-items:center;
+}
+.sound-btn:hover { color:var(--text-soft); }
+.sound-btn svg { width:18px; height:18px; }
+
+/* ═══════ INTRO ═══════ */
+#screen-intro { gap:0; }
+
+.intro-headline {
+  font-family:var(--font-en); font-weight:300;
+  font-size:2.2rem;
+  letter-spacing:.04em; color:rgba(155,180,212,.82);
+  text-align:center; line-height:1.3; margin-bottom:10px;
+  opacity:0; animation:fadeUp 1s cubic-bezier(.22,1,.36,1) .6s forwards;
+}
+.intro-sub {
+  font-size:.9rem; letter-spacing:.08em; color:var(--text-faint);
+  margin-bottom:52px;
+  opacity:0; animation:fadeUp .8s ease 1.1s forwards;
+}
+.moods {
+  display:flex; gap:14px; flex-wrap:wrap; justify-content:center;
+  opacity:0; animation:fadeUp .8s ease 1.4s forwards;
+}
+.mood-card {
+  display:flex; flex-direction:column; align-items:center; gap:13px;
+  padding:22px 14px 18px; width:106px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:20px; cursor:pointer; user-select:none; outline:none;
+  transition:background .35s, border-color .35s,
+             transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s;
+}
+.mood-card:hover {
+  background:rgba(107,159,212,.08); border-color:rgba(107,159,212,.28);
+  transform:translateY(-6px);
+  box-shadow:0 20px 50px rgba(0,0,0,.3), 0 0 0 1px rgba(107,159,212,.12);
+}
+.mood-card:focus-visible {
+  border-color:rgba(107,159,212,.5);
+  box-shadow:0 0 0 2px rgba(107,159,212,.3);
+}
+.mood-card:active { transform:scale(.94); }
+.mood-card svg { width:42px; height:42px; }
+.mood-label {
+  font-size:.84rem; letter-spacing:.04em;
+  color:var(--text-soft); text-align:center; line-height:1.4;
+}
+
+/* ═══════ BREATH SCREEN ═══════ */
+#screen-breath {
+  gap:0; justify-content:space-between; padding:72px 24px 44px;
+}
+.breath-back {
+  position:fixed; top:26px; left:22px;
+  background:none; border:none; cursor:pointer;
+  font-family:var(--font-kr); font-weight:300;
+  font-size:.86rem; letter-spacing:.08em; color:var(--text-faint);
+  transition:color .25s; padding:6px;
+}
+.breath-back:hover { color:var(--text-soft); }
+
+.breath-header {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  opacity:0; animation:fadeUp .7s ease .1s forwards;
+}
+.breath-mood-tag {
+  font-size:.8rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--accent); padding:4px 14px;
+  border:1px solid rgba(107,159,212,.2); border-radius:100px;
+}
+.breath-method-name {
+  font-family:var(--font-en); font-weight:300;
+  font-size:1.7rem; letter-spacing:.06em;
+  color:rgba(155,180,212,.82); text-align:center;
+}
+.breath-desc {
+  font-size:.86rem; color:var(--text-faint); text-align:center;
+  max-width:300px; line-height:1.85; letter-spacing:.02em;
+  white-space:pre-line;
+}
+
+/* ═══════ CIRCLE — 완전 재설계 ═══════
+   핵심 원칙:
+   1. scale 보간 = CSS transition 전담
+      JS는 페이즈 시작 시 target 1회 세팅만
+   2. ripple = 항상 CSS animation 실행,
+      wrapper opacity 만으로 show/hide
+   3. 텍스트 overlay = circle-body 밖,
+      scale 영향 없음
+═══════════════════════════════════ */
+.circle-wrap {
+  display:flex; align-items:center; justify-content:center;
+  position:relative; flex:1; min-height:0;
+  opacity:0; animation:fadeUp .8s ease .25s forwards;
+}
+.circle-scene {
+  position:relative;
+  width:min(270px,62vw); height:min(270px,62vw);
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* ripple — CSS animation 항상 running, wrapper opacity 만 전환 */
+.ripple-wrap {
+  position:absolute; inset:0; pointer-events:none;
+  opacity:0; transition:opacity .85s ease;
+}
+.ripple {
+  position:absolute; inset:0; border-radius:50%;
+  border:1px solid rgba(107,159,212,.42);
+  /* 시작부터 animation running — play/pause 없음 */
+  animation:rippleOut 3.6s cubic-bezier(.18,.6,.38,1) infinite;
+}
+.ripple:nth-child(1) { animation-delay:0s; }
+.ripple:nth-child(2) { animation-delay:1.2s; }
+.ripple:nth-child(3) { animation-delay:2.4s; }
+@keyframes rippleOut {
+  0%   { transform:scale(.46); opacity:.5; }
+  100% { transform:scale(1.65); opacity:0; }
+}
+
+.ring-svg {
+  position:absolute; inset:0; width:100%; height:100%;
+  transform:rotate(-90deg);
+}
+.ring-bg { stroke:rgba(107,159,212,.07); fill:none; stroke-width:1; }
+.ring-fg { stroke:rgba(107,159,212,.45); fill:none; stroke-width:1.2; stroke-linecap:round; }
+
+/* glow — JS가 opacity 값만 세팅, transition은 JS가 동적으로 */
+.circle-glow {
+  position:absolute; inset:-40%; border-radius:50%;
+  background:radial-gradient(circle, rgba(90,148,218,.26) 0%, transparent 62%);
+  pointer-events:none; opacity:0;
+}
+
+/* 버블 — JS가 transform target만 1회 세팅, transition은 JS가 동적으로
+   내부에 자식 없음 → scale 이 내용물에 영향 없음 */
+.circle-body {
+  width:58%; height:58%; border-radius:50%;
+  background:radial-gradient(circle at 38% 32%, #132040, #080f1e);
+  border:1px solid rgba(107,159,212,.15);
+  position:relative; z-index:2;
+}
+
+/* 텍스트 overlay — circle-body 완전히 독립, 절대 크기 고정 */
+.circle-overlay {
+  position:absolute; z-index:4; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+}
+.c-count {
+  font-family:var(--font-en); font-weight:200;
+  font-size:3.4rem;
+  color:rgba(155,180,212,.92); line-height:1;
+  letter-spacing:-.02em;
+}
+.c-phase {
+  font-size:.84rem; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--accent); font-weight:300;
+}
+
+.breath-phrase {
+  font-size:1rem; letter-spacing:.05em;
+  font-weight:300; color:rgba(155,180,212,.4); text-align:center;
+  min-height:1.6em; transition:opacity .6s ease;
+  opacity:0; animation:fadeUp .7s ease .45s forwards;
+}
+
+/* ═══════ CONTROLS ═══════ */
+.breath-controls {
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  opacity:0; animation:fadeUp .7s ease .6s forwards;
+}
+.cycle-row { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.cycle-label-text {
+  font-size:.8rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text-faint);
+}
+.cycle-stepper {
+  display:flex; align-items:center;
+  background:rgba(107,159,212,.05); border:1px solid rgba(107,159,212,.12);
+  border-radius:10px; overflow:hidden;
+}
+.step-btn {
+  width:40px; height:38px; background:none; border:none; cursor:pointer;
+  color:var(--text-soft); font-size:1.2rem; font-family:var(--font-en); font-weight:300;
+  transition:background .2s, color .2s;
+  display:flex; align-items:center; justify-content:center;
+}
+.step-btn:hover  { background:rgba(107,159,212,.1); color:var(--accent-hi); }
+.step-btn:active { background:rgba(107,159,212,.18); }
+.step-btn:disabled { opacity:.3; cursor:not-allowed; }
+.cycle-divider { width:1px; height:24px; background:rgba(107,159,212,.12); }
+.cycle-display {
+  min-width:54px; text-align:center;
+  font-family:var(--font-en); font-weight:300;
+  font-size:1.1rem; letter-spacing:.06em; color:var(--text);
+  cursor:text; padding:0 4px;
+  background:none; border:none; outline:none; -moz-appearance:textfield;
+}
+.cycle-display::-webkit-outer-spin-button,
+.cycle-display::-webkit-inner-spin-button { -webkit-appearance:none; }
+.cycle-progress { font-size:.84rem; letter-spacing:.1em; color:var(--text-faint); min-height:1.2em; }
+.btn-start {
+  font-family:var(--font-en); font-weight:300;
+  font-size:.9rem; letter-spacing:.22em; text-transform:uppercase;
+  padding:14px 52px; border-radius:100px;
+  background:rgba(107,159,212,.08); border:1px solid rgba(107,159,212,.25);
+  color:rgba(138,184,240,.85); cursor:pointer;
+  transition:background .3s, box-shadow .3s, color .3s, transform .12s;
+}
+.btn-start:hover {
+  background:rgba(107,159,212,.15);
+  box-shadow:0 0 36px rgba(107,159,212,.12);
+  color:var(--accent-hi);
+}
+.btn-start:active   { transform:scale(.97); }
+.btn-start:disabled { opacity:.25; cursor:not-allowed; box-shadow:none; }
+.kb-hint {
+  font-size:.76rem; letter-spacing:.06em; color:var(--text-faint);
+  display:flex; gap:12px; align-items:center;
+}
+.kb-hint kbd {
+  font-family:var(--font-en); font-size:.68rem;
+  padding:2px 6px; border:1px solid var(--text-faint);
+  border-radius:3px; color:var(--text-faint);
+  display:inline-block; line-height:1.4;
+}
+
+/* ═══════ DONE ═══════ */
+#screen-done { gap:18px; }
+.done-glyph {
+  font-family:var(--font-en); font-weight:200;
+  font-size:3.4rem; color:rgba(107,159,212,.4); line-height:1;
+  opacity:0; animation:fadeUp .8s ease .2s forwards;
+}
+.done-title {
+  font-family:var(--font-en); font-weight:300;
+  font-size:2.4rem; letter-spacing:.08em;
+  color:rgba(155,180,212,.82); text-align:center;
+  opacity:0; animation:fadeUp .9s ease .4s forwards;
+}
+.done-hr {
+  width:24px; height:1px; background:var(--text-faint);
+  opacity:0; animation:fadeUp .5s ease .7s forwards;
+}
+.done-sub {
+  font-size:.9rem; letter-spacing:.04em; color:var(--text-faint);
+  text-align:center; max-width:280px; line-height:1.9;
+  opacity:0; animation:fadeUp .8s ease .85s forwards;
+}
+.done-stats {
+  display:flex; gap:14px;
+  opacity:0; animation:fadeUp .8s ease .95s forwards;
+}
+.done-stat {
+  display:flex; flex-direction:column; align-items:center; gap:5px;
+  padding:14px 24px; background:var(--surface); border:1px solid var(--border);
+  border-radius:16px;
+}
+.done-stat-val {
+  font-family:var(--font-en); font-weight:200;
+  font-size:2rem; color:rgba(155,180,212,.82); line-height:1;
+}
+.done-stat-lbl {
+  font-size:.76rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--text-faint);
+}
+.done-btns {
+  display:flex; gap:12px; flex-wrap:wrap; justify-content:center;
+  opacity:0; animation:fadeUp .8s ease 1.1s forwards;
+}
+.btn-again {
+  font-family:var(--font-en); font-weight:300;
+  font-size:.9rem; letter-spacing:.18em; text-transform:uppercase;
+  padding:12px 32px; border-radius:100px;
+  background:rgba(107,159,212,.08); border:1px solid rgba(107,159,212,.22);
+  color:rgba(138,184,240,.8); cursor:pointer; transition:background .25s;
+}
+.btn-again:hover { background:rgba(107,159,212,.15); }
+.btn-home {
+  font-family:var(--font-en); font-weight:300;
+  font-size:.9rem; letter-spacing:.18em; text-transform:uppercase;
+  padding:12px 32px; border-radius:100px;
+  background:none; border:1px solid var(--border);
+  color:var(--text-soft); cursor:pointer; transition:border-color .25s, color .25s;
+}
+.btn-home:hover { border-color:rgba(107,159,212,.2); color:var(--text); }
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+</style>
 </head>
 <body>
-    <div id="main-screen">
-        <h1>지금 어떤 상태이신가요?</h1>
-        <div class="button-container">
-            <button class="breath-button" data-mode="anxiety">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#5c6bc0">
-                    <path d="M120-120v-80h240q17 0 28.5-11.5T400-240q0-17-11.5-28.5T360-280H80v-80h280q50 0 85 35t35 85q0 50-35 85t-85 35H120Zm160-200v-80h320q50 0 85-35t35-85q0-50-35-85t-85-35H160v-80h440q83 0 141.5 58.5T800-480q0 83-58.5 141.5T600-280H280Zm0-320v-80h160q17 0 28.5 11.5T480-560q0 17-11.5 28.5T440-520H280Z"/>
-                </svg>
-                <span>Anxiety</span>
-            </button>
-            
-            <button class="breath-button" data-mode="stress">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#5c6bc0">
-                    <path d="M480-120q-116 0-198-80.5T200-397q0-54 22.5-103.5T284-586l196-224 196 224q39 37 61.5 86.5T760-397q0 116-82 196.5T480-120Zm0-80q83 0 141.5-58T680-397q0-35-16.5-70.5T626-524L480-690 334-524q-21 21-37.5 56.5T280-397q0 81 58.5 139T480-200Zm0-290Z"/>
-                </svg>
-                <span>Stress</span>
-            </button>
-            
-            <button class="breath-button" data-mode="insomnia">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#5c6bc0">
-                    <path d="M480-120q-150 0-255-105T120-480q0-150 105-255t255-105q14 0 27.5 1t26.5 3q-41 29-65 75.5T444-660q0 90 63 153t153 63q55 0 101-24.5t75-65.5q2 13 3 26.5t1 27.5q0 150-105 255T480-120Z"/>
-                </svg>
-                <span>Insomnia</span>
-            </button>
-        </div>
+
+<div class="bg"></div>
+<div class="grain"></div>
+
+<div class="brand">
+  <div class="brand-mark"><div class="brand-mark-inner"></div></div>
+  <span class="brand-name">The Breath</span>
+</div>
+
+<button class="sound-btn" id="sound-btn" aria-label="소리 끄기">
+  <svg id="icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+  </svg>
+  <svg id="icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+    <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+    <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+  </svg>
+</button>
+
+<!-- INTRO -->
+<div class="screen visible" id="screen-intro">
+  <h1 class="intro-headline">지금 어떤 기분이신가요?</h1>
+  <p class="intro-sub">아래 감정을 선택하면 맞춤 호흡법을 안내해 드려요</p>
+  <div class="moods">
+
+    <div class="mood-card" role="button" tabindex="0" data-mood="anxious" aria-label="불안해요">
+      <svg viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="rgba(107,159,212,.55)" stroke-width="1.2"/>
+        <path d="M9.5 13.5 Q12.5 11.2 15.5 13.2" stroke="rgba(107,159,212,.6)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+        <path d="M24.5 13.2 Q27.5 11.2 30.5 13.5" stroke="rgba(107,159,212,.6)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+        <circle cx="14.5" cy="17.5" r="1.6" fill="rgba(107,159,212,.7)"/>
+        <circle cx="25.5" cy="17.5" r="1.6" fill="rgba(107,159,212,.7)"/>
+        <path d="M12 27 Q14.5 24.5 17 27 Q19.5 29.5 22 27 Q24.5 24.5 27 27" stroke="rgba(107,159,212,.55)" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+      </svg>
+      <span class="mood-label">불안해요</span>
     </div>
 
-    <div id="breath-screen">
-        <div class="box-track" id="track-container">
-            <div class="dot" id="breathing-dot"></div>
-            <div id="instruction-text">준비</div>
-        </div>
-        <button id="btn-back">뒤로 가기</button>
+    <div class="mood-card" role="button" tabindex="0" data-mood="panic" aria-label="공황이에요">
+      <svg viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="rgba(107,159,212,.55)" stroke-width="1.2"/>
+        <circle cx="14" cy="17" r="3" stroke="rgba(107,159,212,.65)" stroke-width="1.2" fill="none"/>
+        <circle cx="14" cy="17" r="1.1" fill="rgba(107,159,212,.75)"/>
+        <circle cx="26" cy="17" r="3" stroke="rgba(107,159,212,.65)" stroke-width="1.2" fill="none"/>
+        <circle cx="26" cy="17" r="1.1" fill="rgba(107,159,212,.75)"/>
+        <ellipse cx="20" cy="28.5" rx="4" ry="4.5" stroke="rgba(107,159,212,.55)" stroke-width="1.2" fill="none"/>
+        <path d="M4.5 11 L7 13.5M35.5 11 L33 13.5" stroke="rgba(107,159,212,.3)" stroke-width="1" stroke-linecap="round"/>
+        <path d="M3 19 L6 19.5M37 19 L34 19.5" stroke="rgba(107,159,212,.3)" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+      <span class="mood-label">공황이에요</span>
     </div>
 
-    <script src="script.js"></script>
+    <div class="mood-card" role="button" tabindex="0" data-mood="tense" aria-label="긴장돼요">
+      <svg viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="rgba(107,159,212,.55)" stroke-width="1.2"/>
+        <path d="M9.5 12 L15.5 15.5" stroke="rgba(107,159,212,.65)" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M30.5 12 L24.5 15.5" stroke="rgba(107,159,212,.65)" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M11.5 18.5 Q14.5 16.8 17.5 18.5" stroke="rgba(107,159,212,.65)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+        <path d="M22.5 18.5 Q25.5 16.8 28.5 18.5" stroke="rgba(107,159,212,.65)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+        <circle cx="14.5" cy="18.8" r="1.2" fill="rgba(107,159,212,.65)"/>
+        <circle cx="25.5" cy="18.8" r="1.2" fill="rgba(107,159,212,.65)"/>
+        <path d="M14 27.5 L26 27.5" stroke="rgba(107,159,212,.55)" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <span class="mood-label">긴장돼요</span>
+    </div>
+
+    <div class="mood-card" role="button" tabindex="0" data-mood="sad" aria-label="우울해요">
+      <svg viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="rgba(107,159,212,.55)" stroke-width="1.2"/>
+        <path d="M9.5 14.5 Q12.5 13.2 15.5 15" stroke="rgba(107,159,212,.6)" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+        <path d="M24.5 15 Q27.5 13.2 30.5 14.5" stroke="rgba(107,159,212,.6)" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+        <circle cx="14.5" cy="18" r="1.5" fill="rgba(107,159,212,.7)"/>
+        <circle cx="25.5" cy="18" r="1.5" fill="rgba(107,159,212,.7)"/>
+        <path d="M12.5 20.5 Q14.5 22 16.5 20.5" stroke="rgba(107,159,212,.3)" stroke-width=".9" stroke-linecap="round" fill="none"/>
+        <path d="M23.5 20.5 Q25.5 22 27.5 20.5" stroke="rgba(107,159,212,.3)" stroke-width=".9" stroke-linecap="round" fill="none"/>
+        <path d="M13 28.5 Q20 23 27 28.5" stroke="rgba(107,159,212,.55)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+        <path d="M25.5 21.5 Q27 24.5 25.5 25.5 Q24 24.5 25.5 21.5" fill="rgba(107,159,212,.25)"/>
+      </svg>
+      <span class="mood-label">우울해요</span>
+    </div>
+
+    <div class="mood-card" role="button" tabindex="0" data-mood="numb" aria-label="멍해요">
+      <svg viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" stroke="rgba(107,159,212,.55)" stroke-width="1.2"/>
+        <circle cx="14.5" cy="18" r="2.5" stroke="rgba(107,159,212,.5)" stroke-width="1.1" fill="none"/>
+        <circle cx="14.5" cy="18.5" r="1.1" fill="rgba(107,159,212,.65)"/>
+        <path d="M11.8 16.2 Q14.5 15.2 17.2 16.2" stroke="rgba(107,159,212,.65)" stroke-width="1.5" stroke-linecap="round" fill="rgba(9,14,26,1)"/>
+        <circle cx="25.5" cy="18" r="2.5" stroke="rgba(107,159,212,.5)" stroke-width="1.1" fill="none"/>
+        <circle cx="25.5" cy="18.5" r="1.1" fill="rgba(107,159,212,.65)"/>
+        <path d="M22.8 16.2 Q25.5 15.2 28.2 16.2" stroke="rgba(107,159,212,.65)" stroke-width="1.5" stroke-linecap="round" fill="rgba(9,14,26,1)"/>
+        <path d="M15.5 27 L24.5 27" stroke="rgba(107,159,212,.4)" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <span class="mood-label">멍해요</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- BREATH -->
+<div class="screen hidden" id="screen-breath">
+  <button class="breath-back" id="btn-back">← 돌아가기</button>
+
+  <div class="breath-header">
+    <span class="breath-mood-tag" id="mood-tag"></span>
+    <h2 class="breath-method-name" id="method-name"></h2>
+    <p class="breath-desc" id="method-desc"></p>
+  </div>
+
+  <div class="circle-wrap">
+    <div class="circle-scene">
+      <div class="ripple-wrap" id="ripple-wrap">
+        <div class="ripple"></div>
+        <div class="ripple"></div>
+        <div class="ripple"></div>
+      </div>
+      <svg class="ring-svg" viewBox="0 0 100 100">
+        <circle class="ring-bg" cx="50" cy="50" r="48"/>
+        <circle class="ring-fg" id="ring-fg" cx="50" cy="50" r="48"
+          stroke-dasharray="301.6" stroke-dashoffset="301.6"/>
+      </svg>
+      <div class="circle-glow" id="circle-glow"></div>
+      <div class="circle-body" id="circle-body"></div>
+      <div class="circle-overlay">
+        <span class="c-count" id="c-count">—</span>
+        <span class="c-phase" id="c-phase">준비</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="breath-phrase" id="breath-phrase">준비가 되면 시작 버튼을 눌러주세요</p>
+
+  <div class="breath-controls">
+    <div class="cycle-row" id="cycle-row">
+      <span class="cycle-label-text">사이클 수</span>
+      <div class="cycle-stepper">
+        <button class="step-btn" id="btn-dec">−</button>
+        <div class="cycle-divider"></div>
+        <input class="cycle-display" id="cycle-input" type="number" value="4" min="1" max="10"/>
+        <div class="cycle-divider"></div>
+        <button class="step-btn" id="btn-inc">+</button>
+      </div>
+    </div>
+    <p class="cycle-progress" id="cycle-progress"></p>
+    <button class="btn-start" id="btn-start">시작하기</button>
+    <p class="kb-hint"><kbd>Space</kbd> 시작 / 일시정지 &nbsp; <kbd>Esc</kbd> 뒤로가기</p>
+  </div>
+</div>
+
+<!-- DONE -->
+<div class="screen hidden" id="screen-done">
+  <span class="done-glyph">◎</span>
+  <h2 class="done-title">잘 하셨어요</h2>
+  <div class="done-hr"></div>
+  <p class="done-sub">모든 호흡을 마쳤습니다.<br/>몸과 마음이 조금 더 편안해지셨기를 바랍니다.</p>
+  <div class="done-stats" id="done-stats"></div>
+  <div class="done-btns">
+    <button class="btn-again" id="btn-again">한 번 더</button>
+    <button class="btn-home"  id="btn-home">처음으로</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════
+   METHODS
+══════════════════════════════ */
+const METHODS = {
+  anxious:{mood:'불안해요',name:'4-7-8 Breathing',
+    desc:'불안을 가라앉히는 데 효과적인 호흡법이에요.\n숫자를 세며 천천히 따라해 보세요.',
+    phases:[
+      {label:'들이쉬기',dur:4,type:'inhale',phrase:'코로 천천히 들이쉬세요'},
+      {label:'참기',    dur:7,type:'hold',  phrase:'숨을 부드럽게 참아주세요'},
+      {label:'내쉬기',  dur:8,type:'exhale',phrase:'입으로 길게, 천천히 내쉬세요'},
+    ]},
+  panic:{mood:'공황이에요',name:'Box Breathing',
+    desc:'박스를 그리듯 균등하게 호흡해요.\n지금 이 순간에만 집중해 보세요.',
+    phases:[
+      {label:'들이쉬기',dur:4,type:'inhale',phrase:'코로 4초, 들이쉬세요'},
+      {label:'참기',    dur:4,type:'hold',  phrase:'잠시 머물러도 괜찮아요'},
+      {label:'내쉬기',  dur:4,type:'exhale',phrase:'천천히, 내보내세요'},
+      {label:'참기',    dur:4,type:'hold2', phrase:'비워진 채로, 잠시'},
+    ]},
+  tense:{mood:'긴장돼요',name:'Box Breathing',
+    desc:'어깨 힘을 빼고 시작해 보세요.\n균형 잡힌 호흡이 긴장을 풀어줘요.',
+    phases:[
+      {label:'들이쉬기',dur:4,type:'inhale',phrase:'어깨를 내리고 들이쉬세요'},
+      {label:'참기',    dur:4,type:'hold',  phrase:'그대로 가만히요'},
+      {label:'내쉬기',  dur:4,type:'exhale',phrase:'긴장을 흘려 보내세요'},
+      {label:'참기',    dur:4,type:'hold2', phrase:'비워진 채로, 잠시'},
+    ]},
+  sad:{mood:'우울해요',name:'Diaphragm Breathing',
+    desc:'배로 깊게 호흡해요.\n지금 이 감정도 충분히 괜찮아요.',
+    phases:[
+      {label:'들이쉬기',dur:4,type:'inhale',phrase:'배를 부풀리며 들이쉬세요'},
+      {label:'내쉬기',  dur:6,type:'exhale',phrase:'길게, 천천히 내보내세요'},
+    ]},
+  numb:{mood:'멍해요',name:'Physiological Sigh',
+    desc:'이중 흡입 후 길게 내쉬는 호흡법이에요.\n멍한 의식을 빠르게 되돌리는 데 효과적이에요.',
+    phases:[
+      {label:'들이쉬기',dur:2,type:'inhale',phrase:'코로 깊게 들이쉬세요'},
+      {label:'한 번 더',dur:1,type:'hold',  phrase:'짧게 한 번 더 들이마셔요'},
+      {label:'내쉬기',  dur:6,type:'exhale',phrase:'입으로 길게, 천천히 내보내세요'},
+    ]},
+};
+
+const SCALE_MAX  = 1.28;
+const SCALE_MIN  = 0.76;
+const SCALE_REST = 1.00;
+const CIRC       = 301.6;
+
+/* ══════════════════════════════
+   AUDIO — reverb + pentatonic
+══════════════════════════════ */
+let audioCtx=null, masterGain=null, reverbNode=null, muted=false;
+
+function initAudio(){
+  if(audioCtx){ if(audioCtx.state==='suspended') audioCtx.resume(); return; }
+  audioCtx   = new (window.AudioContext||window.webkitAudioContext)();
+  masterGain = audioCtx.createGain(); masterGain.gain.value=1;
+  masterGain.connect(audioCtx.destination);
+  reverbNode = makeReverb(3.5,2.2); reverbNode.connect(masterGain);
+  if(audioCtx.state==='suspended') audioCtx.resume();
+}
+function makeReverb(dur,decay){
+  const sr=audioCtx.sampleRate, len=Math.floor(sr*dur);
+  const buf=audioCtx.createBuffer(2,len,sr);
+  for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}
+  const c=audioCtx.createConvolver(); c.buffer=buf; return c;
+}
+function voice(freq,t0,vol,dur){
+  const osc=audioCtx.createOscillator(), env=audioCtx.createGain(),
+        dry=audioCtx.createGain(), wet=audioCtx.createGain();
+  osc.type='sine'; osc.frequency.setValueAtTime(freq,t0);
+  env.gain.setValueAtTime(0,t0);
+  env.gain.linearRampToValueAtTime(vol,t0+0.12);
+  env.gain.exponentialRampToValueAtTime(vol*0.55,t0+dur*0.5);
+  env.gain.linearRampToValueAtTime(0.0001,t0+dur);
+  dry.gain.value=0.32; wet.gain.value=0.68;
+  osc.connect(env); env.connect(dry); dry.connect(masterGain);
+  env.connect(wet); wet.connect(reverbNode);
+  osc.start(t0); osc.stop(t0+dur+0.05);
+}
+const CHORDS={inhale:[196,294,440],hold:[220,330,494],exhale:[130,196,330],hold2:[110,165,247]};
+function playTone(type){
+  if(muted||!audioCtx) return;
+  const now=audioCtx.currentTime;
+  (CHORDS[type]||CHORDS.inhale).forEach((f,i)=>voice(f,now+i*0.07,0.036,1.6));
+}
+function playChord(){
+  if(muted||!audioCtx) return;
+  const now=audioCtx.currentTime;
+  [130,196,294,330,392].forEach((f,i)=>voice(f,now+i*0.11,0.030,3.2));
+}
+document.getElementById('sound-btn').addEventListener('click',()=>{
+  muted=!muted;
+  document.getElementById('icon-on').style.display =muted?'none':'';
+  document.getElementById('icon-off').style.display=muted?'':'none';
+  document.getElementById('sound-btn').setAttribute('aria-label',muted?'소리 켜기':'소리 끄기');
+});
+
+function haptic(ms=22){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(_){}}
+
+/* 통계 */
+function loadStats(){try{return JSON.parse(localStorage.getItem('breathStats')||'{}');}catch{return {};}}
+function saveStats(){
+  const s=loadStats(), today=new Date().toDateString();
+  let streak=s.streak||0;
+  if(s.lastDate!==today){const y=new Date();y.setDate(y.getDate()-1);streak=(s.lastDate===y.toDateString())?streak+1:1;}
+  const n={totalSessions:(s.totalSessions||0)+1,streak,lastDate:today};
+  try{localStorage.setItem('breathStats',JSON.stringify(n));}catch(_){}
+  return n;
+}
+
+/* DOM */
+const $=id=>document.getElementById(id);
+const elTag=$('mood-tag'), elName=$('method-name'), elDesc=$('method-desc');
+const elBody=$('circle-body'), elGlow=$('circle-glow');
+const elCount=$('c-count'), elPhase=$('c-phase'), elPhrase=$('breath-phrase');
+const elCycInp=$('cycle-input'), elCycProg=$('cycle-progress');
+const elCycRow=$('cycle-row'), elBtn=$('btn-start'), elRing=$('ring-fg');
+const rippleWrap=$('ripple-wrap');
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('visible');s.classList.add('hidden');});
+  const el=$(id); el.classList.remove('hidden'); void el.offsetWidth; el.classList.add('visible');
+}
+
+let userCycles=4;
+function setCycles(n){
+  n=Math.max(1,Math.min(10,n)); userCycles=n; elCycInp.value=n;
+  $('btn-dec').disabled=n<=1; $('btn-inc').disabled=n>=10;
+}
+$('btn-dec').addEventListener('click',()=>setCycles(userCycles-1));
+$('btn-inc').addEventListener('click',()=>setCycles(userCycles+1));
+elCycInp.addEventListener('change',()=>{const v=parseInt(elCycInp.value);if(!isNaN(v))setCycles(v);});
+elCycInp.addEventListener('keydown',e=>{
+  if(e.key==='ArrowUp'){e.preventDefault();setCycles(userCycles+1);}
+  if(e.key==='ArrowDown'){e.preventDefault();setCycles(userCycles-1);}
+});
+setCycles(4);
+
+let method=null, running=false, paused=false;
+let rafId=null, phaseStartTs=0, cycle=0, phaseIdx=0, pausedAt=null;
+
+/* 감정 카드 */
+function handleMoodSelect(){
+  initAudio(); method=METHODS[this.dataset.mood]; initBreath(); showScreen('screen-breath');
+}
+document.querySelectorAll('.mood-card').forEach(c=>{
+  c.addEventListener('click',handleMoodSelect);
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();handleMoodSelect.call(c);}});
+});
+
+/* 키보드 */
+document.addEventListener('keydown',e=>{
+  if(!$('screen-breath').classList.contains('visible')) return;
+  if(e.key===' '||e.key==='Spacebar'){
+    e.preventDefault();
+    if(!running&&!paused) startBreathing();
+    else if(running)      pauseBreathing();
+    else                  resumeBreathing();
+  }
+  if(e.key==='Escape'){running=false;paused=false;if(rafId)cancelAnimationFrame(rafId);showScreen('screen-intro');}
+});
+
+/* 초기화 */
+function initBreath(){
+  elTag.textContent=method.mood; elName.textContent=method.name; elDesc.textContent=method.desc;
+  setPhrase('준비가 되면 시작 버튼을 눌러주세요',true);
+  elCount.textContent='—'; elPhase.textContent='준비';
+  elBtn.textContent='시작하기'; elBtn.disabled=false;
+  elCycRow.style.opacity='1'; elCycRow.style.pointerEvents='auto';
+  elCycProg.textContent=''; setRing(0);
+  /* 원 즉시 초기화 */
+  elBody.style.transition='none'; elBody.style.transform=`scale(${SCALE_REST})`;
+  elGlow.style.transition='none'; elGlow.style.opacity='0';
+  rippleWrap.style.opacity='0';
+  running=false; paused=false; cycle=0; phaseIdx=0;
+  if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  method.phases.forEach(p=>{p._active=false;});
+}
+
+function setRing(pct){elRing.style.strokeDashoffset=CIRC*(1-Math.min(1,Math.max(0,pct)));}
+function setPhrase(txt,instant){
+  if(instant){elPhrase.style.opacity='1';elPhrase.textContent=txt;return;}
+  elPhrase.style.opacity='0';
+  setTimeout(()=>{elPhrase.textContent=txt;elPhrase.style.opacity='1';},380);
+}
+
+/* ══════════════════════════════════════════
+   원 비주얼 — CSS transition 방식
+   ─────────────────────────────────────────
+   페이즈 시작 시 target 값만 1회 세팅.
+   CSS transition이 모든 보간을 담당.
+   rAF 루프에서 scale/glow 연산 없음.
+══════════════════════════════════════════ */
+function applyPhaseVisual(phase){
+  const dur=phase.dur;
+  if(phase.type==='inhale'){
+    elBody.style.transition=`transform ${dur}s cubic-bezier(0.37,0,0.63,1)`;
+    elBody.style.transform =`scale(${SCALE_MAX})`;
+    elGlow.style.transition=`opacity ${dur}s ease-in`;
+    elGlow.style.opacity   ='0.80';
+    rippleWrap.style.opacity='1';
+  } else if(phase.type==='exhale'){
+    elBody.style.transition=`transform ${dur}s cubic-bezier(0.37,0,0.63,1)`;
+    elBody.style.transform =`scale(${SCALE_MIN})`;
+    elGlow.style.transition=`opacity ${dur}s ease-out`;
+    elGlow.style.opacity   ='0.04';
+    rippleWrap.style.opacity='0';
+  } else if(phase.type==='hold'){
+    /* 이미 MAX에 있음 — transition 없이 고정 */
+    elBody.style.transition='none';
+    elBody.style.transform =`scale(${SCALE_MAX})`;
+    elGlow.style.transition='opacity 0.5s ease';
+    elGlow.style.opacity   ='0.86';
+    rippleWrap.style.opacity='0';
+  } else {
+    /* hold2: 이미 MIN에 있음 */
+    elBody.style.transition='none';
+    elBody.style.transform =`scale(${SCALE_MIN})`;
+    elGlow.style.transition='opacity 0.5s ease';
+    elGlow.style.opacity   ='0.03';
+    rippleWrap.style.opacity='0';
+  }
+}
+
+function startBreathing(){
+  if(running) return;
+  initAudio(); running=true; paused=false;
+  elBtn.textContent='일시정지';
+  elCycRow.style.opacity='0.35'; elCycRow.style.pointerEvents='none';
+  cycle=0; phaseIdx=0; method.phases.forEach(p=>{p._active=false;});
+  rafId=requestAnimationFrame(ts=>{phaseStartTs=ts;tickLoop(ts);});
+}
+function pauseBreathing(){
+  if(!running) return;
+  running=false; paused=true; pausedAt=performance.now();
+  if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  /* CSS transition 중단: 현재 computed transform을 그 자리에 고정 */
+  const cur=getComputedStyle(elBody).transform;
+  elBody.style.transition='none'; elBody.style.transform=cur;
+  const curO=getComputedStyle(elGlow).opacity;
+  elGlow.style.transition='none'; elGlow.style.opacity=curO;
+  rippleWrap.style.opacity='0';
+  elBtn.textContent='재개하기';
+  setPhrase('일시정지 — 재개하려면 버튼을 누르세요',true);
+}
+function resumeBreathing(){
+  if(!paused) return;
+  const drift=performance.now()-pausedAt;
+  phaseStartTs+=drift; pausedAt=null; paused=false; running=true;
+  const phase=method.phases[phaseIdx];
+  setPhrase(phase.phrase,false);
+  /* 남은 시간으로 transition 재계산 */
+  const elapsed=(performance.now()-pausedAt+drift)/1000; // actually phaseStartTs already shifted
+  const tDone=Math.min((performance.now()-phaseStartTs-drift)/1000/phase.dur,1);
+  const remaining=Math.max(0.1,phase.dur*(1-tDone));
+  if(phase.type==='inhale'){
+    elBody.style.transition=`transform ${remaining}s cubic-bezier(0.37,0,0.63,1)`;
+    elBody.style.transform =`scale(${SCALE_MAX})`;
+    elGlow.style.transition=`opacity ${remaining}s ease-in`;
+    elGlow.style.opacity   ='0.80';
+    rippleWrap.style.opacity='1';
+  } else if(phase.type==='exhale'){
+    elBody.style.transition=`transform ${remaining}s cubic-bezier(0.37,0,0.63,1)`;
+    elBody.style.transform =`scale(${SCALE_MIN})`;
+    elGlow.style.transition=`opacity ${remaining}s ease-out`;
+    elGlow.style.opacity   ='0.04';
+  }
+  elBtn.textContent='일시정지';
+  rafId=requestAnimationFrame(tickLoop);
+}
+
+/* ══════════════════════════════════════════
+   rAF 루프 — 카운트다운 숫자 + 진행 링만
+   scale/glow 연산 없음
+══════════════════════════════════════════ */
+function tickLoop(ts){
+  if(!running) return;
+  const phase=method.phases[phaseIdx];
+
+  if(!phase._active){
+    phase._active=true; phaseStartTs=ts;
+    elPhase.textContent=phase.label;
+    setPhrase(phase.phrase,false);
+    elCycProg.textContent=`${cycle+1} / ${userCycles} 사이클`;
+    applyPhaseVisual(phase);
+    playTone(phase.type);
+    haptic(20);
+  }
+
+  const t=Math.min((ts-phaseStartTs)/(phase.dur*1000),1);
+
+  /* 카운트다운 */
+  const rem=t>=1?'·':Math.max(1,Math.ceil(phase.dur*(1-t)));
+  if(elCount.textContent!==String(rem)) elCount.textContent=rem;
+
+  /* 진행 링 */
+  setRing((cycle*method.phases.length+phaseIdx+t)/(userCycles*method.phases.length));
+
+  if(t<1){
+    rafId=requestAnimationFrame(tickLoop);
+  } else {
+    phase._active=false; phaseIdx++;
+    if(phaseIdx>=method.phases.length){phaseIdx=0;cycle++;}
+    if(cycle>=userCycles) finishBreathing();
+    else rafId=requestAnimationFrame(tickLoop);
+  }
+}
+
+/* 완료 */
+function finishBreathing(){
+  running=false; paused=false;
+  if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  rippleWrap.style.opacity='0'; setRing(1);
+  setPhrase('모두 마쳤습니다. 수고하셨어요',false);
+  elBody.style.transition=`transform 1.8s ease-out`;
+  elBody.style.transform =`scale(${SCALE_REST})`;
+  elGlow.style.transition='opacity 1.8s ease-out';
+  elGlow.style.opacity   ='0';
+  playChord(); haptic([35,35,35]);
+  const stats=saveStats();
+  $('done-stats').innerHTML=`
+    <div class="done-stat">
+      <span class="done-stat-val">${stats.totalSessions}</span>
+      <span class="done-stat-lbl">총 세션</span>
+    </div>
+    <div class="done-stat">
+      <span class="done-stat-val">${stats.streak}</span>
+      <span class="done-stat-lbl">연속 일수</span>
+    </div>`;
+  setTimeout(()=>showScreen('screen-done'),2200);
+}
+
+elBtn.addEventListener('click',()=>{
+  if(!running&&!paused) startBreathing();
+  else if(running)      pauseBreathing();
+  else                  resumeBreathing();
+});
+$('btn-back').addEventListener('click',()=>{
+  running=false;paused=false;if(rafId)cancelAnimationFrame(rafId);showScreen('screen-intro');
+});
+$('btn-again').addEventListener('click',()=>{initBreath();showScreen('screen-breath');});
+$('btn-home').addEventListener('click',()=>{
+  running=false;paused=false;if(rafId)cancelAnimationFrame(rafId);showScreen('screen-intro');
+});
+</script>
 </body>
 </html>
